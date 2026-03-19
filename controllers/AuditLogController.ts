@@ -1,5 +1,16 @@
 import AuditLog from "../models/AuditLog.js";
 import type { Request,Response,NextFunction } from "express";
+import mongoose from "mongoose";
+
+// Helper function to safely extract a string from params
+const extractParam = (param: string | string[] | undefined): string | null => {
+    if (!param) return null;
+    if (Array.isArray(param)) {
+        return param[0] ?? null;
+    }
+    return param;
+};
+
 export const getAuditLogs = async (req:Request, res:Response, next:NextFunction) => {
     try {
         const logs = await AuditLog.find().populate('user', 'name email');
@@ -10,8 +21,14 @@ export const getAuditLogs = async (req:Request, res:Response, next:NextFunction)
 };
 export const getAuditLogsByUser = async (req:Request, res:Response, next:NextFunction) => {
     try {
-        const { userId } = req.params;
-        const logs = await AuditLog.find({ user: userId }).populate('user', 'name email');
+        const userIdParam = extractParam(req.params.userId);
+        if (!userIdParam) {
+            return res.status(400).json({ message: 'Missing or invalid userId parameter' });
+        }
+        if (!mongoose.Types.ObjectId.isValid(userIdParam)) {
+            return res.status(400).json({ message: 'Invalid userId format' });
+        }
+        const logs = await AuditLog.find({ user: new mongoose.Types.ObjectId(userIdParam) }).populate('user', 'name email');
         res.json(logs);
     } catch (error:any) {
         res.status(500).json({ message: error?.message });
@@ -20,10 +37,27 @@ export const getAuditLogsByUser = async (req:Request, res:Response, next:NextFun
 export const getAuditLogsByDateRange = async (req:Request, res:Response, next:NextFunction) => {
     try {
         const { startDate, endDate } = req.params;
+        
+        // Helper function to safely parse date from params
+        const parseDate = (param: string | string[] | undefined): Date | null => {
+            if (!param) return null;
+            const dateStr = Array.isArray(param) ? (param[0] ?? undefined) : param;
+            if (!dateStr) return null;
+            const date = new Date(dateStr);
+            return isNaN(date.getTime()) ? null : date;
+        };
+        
+        const parsedStartDate = parseDate(startDate);
+        const parsedEndDate = parseDate(endDate);
+        
+        if (!parsedStartDate || !parsedEndDate) {
+            return res.status(400).json({ message: 'Invalid startDate or endDate parameter' });
+        }
+        
         const logs = await AuditLog.find({
             timestamp: {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
+                $gte: parsedStartDate,
+                $lte: parsedEndDate
             }
         }).populate('user', 'name email');
         res.json(logs);
@@ -33,8 +67,11 @@ export const getAuditLogsByDateRange = async (req:Request, res:Response, next:Ne
 };
 export const getAuditLogsByAction = async (req:Request, res:Response, next:NextFunction) => {
     try {
-        const { action } = req.params;
-        const logs = await AuditLog.find({ action: action }).populate('user', 'name email');
+        const actionParam = extractParam(req.params.action);
+        if (!actionParam) {
+            return res.status(400).json({ message: 'Missing or invalid action parameter' });
+        }
+        const logs = await AuditLog.find({ action: actionParam }).populate('user', 'name email');
         res.json(logs);
     } catch (error:any) {
         res.status(500).json({ message: error?.message });
@@ -42,8 +79,11 @@ export const getAuditLogsByAction = async (req:Request, res:Response, next:NextF
 };
 export const getAuditLogsByResource = async (req:Request, res:Response, next:NextFunction) => {
     try {
-        const { resource } = req.params;
-        const logs = await AuditLog.find({ resource: resource }).populate('user', 'name email');
+        const resourceParam = extractParam(req.params.resource);
+        if (!resourceParam) {
+            return res.status(400).json({ message: 'Missing or invalid resource parameter' });
+        }
+        const logs = await AuditLog.find({ resource: resourceParam }).populate('user', 'name email');
         res.json(logs);
     } catch (error:any) {
         res.status(500).json({ message: error?.message });
@@ -51,8 +91,11 @@ export const getAuditLogsByResource = async (req:Request, res:Response, next:Nex
 };
 export const getAuditLogsBySeverity = async (req:Request, res:Response, next:NextFunction) => {
     try {
-        const { severity } = req.params;
-        const logs = await AuditLog.find({ severity: severity }).populate('user', 'name email');
+        const severityParam = extractParam(req.params.severity);
+        if (!severityParam) {
+            return res.status(400).json({ message: 'Missing or invalid severity parameter' });
+        }
+        const logs = await AuditLog.find({ severity: severityParam }).populate('user', 'name email');
         res.json(logs);
     } catch (error:any) {
         res.status(500).json({ message: error?.message });
@@ -60,8 +103,11 @@ export const getAuditLogsBySeverity = async (req:Request, res:Response, next:Nex
 };
 export const getAuditLogsByIpAddress = async (req:Request, res:Response, next:NextFunction) => {
     try {
-        const { ipAddress } = req.params;
-        const logs = await AuditLog.find({ ipAddress: ipAddress }).populate('user', 'name email');
+        const ipAddressParam = extractParam(req.params.ipAddress);
+        if (!ipAddressParam) {
+            return res.status(400).json({ message: 'Missing or invalid ipAddress parameter' });
+        }
+        const logs = await AuditLog.find({ ipAddress: ipAddressParam }).populate('user', 'name email');
         res.json(logs);
     } catch (error:any) {
         res.status(500).json({ message: error?.message });
@@ -69,8 +115,11 @@ export const getAuditLogsByIpAddress = async (req:Request, res:Response, next:Ne
 };
 export const getAuditLogsBySessionId = async (req:Request, res:Response, next:NextFunction) => {
     try {
-        const { sessionId } = req.params;
-        const logs = await AuditLog.find({ sessionId: sessionId }).populate('user', 'name email');
+        const sessionIdParam = extractParam(req.params.sessionId);
+        if (!sessionIdParam) {
+            return res.status(400).json({ message: 'Missing or invalid sessionId parameter' });
+        }
+        const logs = await AuditLog.find({ sessionId: sessionIdParam }).populate('user', 'name email');
         res.json(logs);
     } catch (error:any) {
         res.status(500).json({ message: error?.message });
@@ -79,8 +128,11 @@ export const getAuditLogsBySessionId = async (req:Request, res:Response, next:Ne
 
 export const getAuditLogsByUserAgent = async (req:Request, res:Response, next:NextFunction) => {
     try {
-        const { userAgent } = req.params;
-        const logs = await AuditLog.find({ userAgent: userAgent }).populate('user', 'name email');
+        const userAgentParam = extractParam(req.params.userAgent);
+        if (!userAgentParam) {
+            return res.status(400).json({ message: 'Missing or invalid userAgent parameter' });
+        }
+        const logs = await AuditLog.find({ userAgent: userAgentParam }).populate('user', 'name email');
         res.json(logs);
     } catch (error:any) {
         res.status(500).json({ message: error?.message });

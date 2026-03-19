@@ -33,3 +33,35 @@ export const getRecentActivityLogs = async (req:Request, res:Response) => {
     res.status(500).json({ message: error.message });
   }
 };
+export const createActivityLog = async (req:Request, res:Response) => {
+  try {
+    const log = await ActivityLog.create(req.body);
+    res.status(201).json(log);
+  } catch (error:any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const deleteActivityLog = async (req:Request, res:Response) => {
+  try {
+    const { id } = req.params;
+    const log = await ActivityLog.findByIdAndDelete(id);
+    if (!log) {
+      return res.status(404).json({ message: "Activity log not found" });
+    }
+    res.json({ message: "Activity log deleted successfully" });
+  } catch (error:any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const updateActivityLog = async (req:Request, res:Response) => {
+  try {
+    const { id } = req.params;
+    const log = await ActivityLog.findByIdAndUpdate(id, req.body, { new: true });
+    if (!log) {
+      return res.status(404).json({ message: "Activity log not found" });
+    }
+    res.json(log);
+  } catch (error:any) {
+    res.status(500).json({ message: error.message });
+  }
+};

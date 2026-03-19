@@ -1,10 +1,13 @@
  import mongoose,{Document,Schema} from "mongoose";
+ import bcrypt from "bcryptjs";
+ 
  export interface IUser extends Document{
             name:string;
             email:string;
             password:string;
             role:string;
-            profile_image?:string
+            profile_image?:string;
+            comparePassword(candidatePassword: string): Promise<boolean>;
  }
 
  const userSchema=new 
@@ -31,5 +34,10 @@
         default:"student"
     }
  },{timestamps:true});
+
+ // Add comparePassword method to the schema
+ userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+     return bcrypt.compare(candidatePassword, this.password);
+ };
 
  export default mongoose.model<IUser>("User",userSchema);

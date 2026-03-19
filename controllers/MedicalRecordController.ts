@@ -12,7 +12,7 @@ export const fetchMedicalrecords = (req:Request, res:Response, next:NextFunction
             next(err);
         });
 };
-export const addMedicalrecord = (req:Request, res:Response, next:NextFunction) => {
+export const createMedicalrecord = (req:Request, res:Response, next:NextFunction) => {
     const { patient, diagnosis, treatment, prescription } = req.body;
     const medicalrecord = new Medicalrecord({
         patient: patient,
