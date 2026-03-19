@@ -1,6 +1,7 @@
 import mongoose,{Document,Schema} from "mongoose";
 export interface IAttendance extends Document{
     student:mongoose.Types.ObjectId;
+    class:mongoose.Types.ObjectId;
     status:'present'|'absent';
     date:Date;
 }
@@ -8,6 +9,11 @@ const attendanceSchema=new Schema<IAttendance>({
     student:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Student",
+        required:true
+    },
+    class:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Class",
         required:true
     },
     status:{
